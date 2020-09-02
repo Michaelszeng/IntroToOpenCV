@@ -1,3 +1,4 @@
+import numpy as np
 import argparse
 import cv2
 import imutils
@@ -9,13 +10,6 @@ args = vars(ap.parse_args())
 image = cv2.imread(args.get("image"))
 cv2.imshow("Original", image)
 
-# flipped = cv2.flip(image, 1)
-# cv2.imshow("Flipped Horizontally", flipped)
-#
-# flipped = cv2.flip(image, 0)
-# cv2.imshow("Flipped Vertically", flipped)
-
-flipped = imutils.flip(image, -1)
-cv2.imshow("Flipped Both", flipped)
-
+cropped = imutils.crop(image, (0, 0), (300, 300))
+cv2.imshow("Cropped", cropped)
 cv2.waitKey(0)

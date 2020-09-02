@@ -34,3 +34,16 @@ def resize(image, newWidth = None, newHeight = None, inter = cv2.INTER_AREA):
 
     resized = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
     return resized
+
+def flip(image, mode):
+    return cv2.flip(image, mode)
+
+def crop(image, startCoord, endCoord):  #Inputs are 2 value tuples
+    return image[startCoord[1]:endCoord[1], startCoord[0]:endCoord[0]]
+
+def changeBrightness(image, amount):
+    M = np.ones(image.shape, dtype = "uint8") * abs(amount)
+    if amount >= 0:
+        return cv2.add(image, M)
+    else:
+        return cv2.subtract(image, M)
