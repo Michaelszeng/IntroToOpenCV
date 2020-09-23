@@ -4,7 +4,7 @@ import numpy as np  #Numeric/array calculations
 import argparse     #Import arguments (the path to the image)
 import cv2          #All the Computer Vision functions
 import imutils      #My own class with simplified OpenCV functions
-from math import hypot  #Measure distance between points
+import math         #Use math functions
 
 def main():
     """
@@ -14,6 +14,7 @@ def main():
     #Initalize the variables to hold the results
     avgHueResult = -1
     cntAspectRatioResults = -1
+    houghRotationAspectRatioResults = -1
 
     #Get the path to the image of the rings
     ap = argparse.ArgumentParser()
@@ -95,9 +96,9 @@ def main():
             (hue, sat, val) = imageHSVCroppedIsolated[c, r]     #Get HSV values of the pixel
             hueTotal = hueTotal + hue   #Append to the total hue value
     hueAvg = hueTotal / (imageHSVCroppedIsolated.shape[1] * imageHSVCroppedIsolated.shape[0])   #Calculate the average hue
-    # print("avg Hue: %d" % hueAvg)
+    print("avg Hue: %d" % hueAvg)
     #Based on the hue, determine the heigh of the ring stack based on pre-deterined thesholds
-    if hueAvg > 3:
+    if hueAvg >= 4:
         avgHueResult = 4
     elif hueAvg > 0:
         avgHueResult = 1
@@ -116,17 +117,36 @@ def main():
 
     Unfortunately, this method wasn't finished in time.
     """
-    # edged = getEdges(image)
-    # cv2.imshow("edged: ", image)
-    # lines = cv2.HoughLinesP(edged, 1, np.pi/180, 40, minLineLength = 50, maxLineGap = 40)
-    # print(lines)
-    #
-    # for line in lines:  #Draw the lines found
-    #     x1, y1, x2, y2 = line[0]    #Get endpoints of line
-    #     cv2.line(edged, (x1, y1), (x2, y2), (255, 255, 255), 2)  #Draw Line
-    # cv2.imshow("lines", edged)
-    #
-    # cv2.waitKey(0)
+    edged = getEdges(image)
+    edged = cv2.GaussianBlur(edged, (5, 5), 0)
+    cv2.imshow("edged: ", edged)
+    #Last Parameter is Threshold, most be greater than threshold to be counted
+    lines = cv2.HoughLinesP(edged, 1, np.pi/180, 60)
+    print(lines)
+
+    try:
+        horizSlopesSum = 0.0
+        numHorizSlopes = 0
+        for line in lines:  #Draw the lines found
+            x1, y1, x2, y2 = line[0]    #Get endpoints of line
+            cv2.line(edged, (x1, y1), (x2, y2), (255, 255, 255), 2)  #Draw Line
+            if x2 - x1 != 0:
+                slope = (y2-y1) / (x2-x1)
+                if abs(0.0 - slope) < 0.25:
+                    horizSlopesSum += slope
+                    numHorizSlopes += 1
+        avgHorizSlope = horizSlopesSum / numHorizSlopes
+        print("Slope: %f" % avgHorizSlope)
+        angle = math.degrees(math.atan(avgHorizSlope))
+        print("angle: %f" % angle)
+
+        cv2.imshow("lines", edged)
+    except:
+        print("Exception Thrown")
+        houghRotationAspectRatioResults = 0
+
+    print("# Rings based on rotated image and detecting aspect ratio: %d" % houghRotationAspectRatioResults)
+    cv2.waitKey(0)
 
 
 def removeBackground(image):
