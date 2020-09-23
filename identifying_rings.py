@@ -45,14 +45,15 @@ def main():
 
     """
     Detection Method 1: Isolate the ring stack, create a contour around it, then detect
-    the height to width ratio of the contour. This seems to be the most robust.
+    the height to width ratio of the contour to determine the number of rings
     """
     edged = getEdges(image)     #Get image with black background and edges
+    cv2.imshow("Method 1: Image with background removed", edged)
 
     #get the contours
     (cnts, useless) = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    #cnts is a list of the actual contours
     cv2.drawContours(image, cnts, -1, (255, 120, 0), 2)   #You can only draw one contour at a time, or all of them
-    cv2.imshow("Contour Around Rings", image)
+    cv2.imshow("Method 1: Contour Around Rings", image)
 
     for (i, c) in enumerate(cnts):
         (x, y, w, h) = cv2.boundingRect(c)  #returns tuple with rectangle dimensions to bound the contour c
@@ -76,15 +77,17 @@ def main():
 
     """
     Detection Method 2: find the average hue in a cropped image of the stack, and compare them
-    to threshold values
+    to threshold values to determine the ring stack
     """
     imageCropped = imutils.crop(original, (340, 270), (420, 320))   #Crop image to remove background noise
     if obstacles:
         imageCropped = imutils.crop(original, (320, 250), (400, 300))   #Crop image to remove background noise
+    cv2.imshow("Method 2: Cropped Image", imageCropped)
 
     imageCroppedIsolated = removeBackground(imageCropped)   #color the background black to remove noise
+    cv2.imshow("Method 2: Image with background removed", imageCroppedIsolated)
     imageHSVCroppedIsolated = cv2.cvtColor(imageCroppedIsolated, cv2.COLOR_BGR2HSV) #Converting to HSV
-    cv2.imshow("imageHSVCroppedIsolated", imageHSVCroppedIsolated)
+    cv2.imshow("Method 2: Image, cropped, and in HSV", imageHSVCroppedIsolated)
 
     hueTotal = 0
     for r in range(0, imageHSVCroppedIsolated.shape[1] - 1):    #Loop through the width of the img
@@ -106,9 +109,10 @@ def main():
 
 
     """
-    Detection Method 3: Using Hough Line Detection to detect the horizontal and vertical lines
-    of the ring stack. Based on the ration of the lenghts of these lines, we can determine
-    the size of the ring stack.
+    Detection Method 3: Finding the contour around the ring stack, drawing it over a
+    black background, then using Hough Line Detection to find the angle of the camera,
+    then rotating the image based on the camera's tilt. Finally, compare the new height
+    and width ratio of the contour and determine the number of rings.
 
     Unfortunately, this method wasn't finished in time.
     """
@@ -119,8 +123,7 @@ def main():
     #
     # for line in lines:  #Draw the lines found
     #     x1, y1, x2, y2 = line[0]    #Get endpoints of line
-    #     cv2.line(edged, (x1, y1), (x2, y2), (0, 255, 0), 2)  #Draw Line
-    #
+    #     cv2.line(edged, (x1, y1), (x2, y2), (255, 255, 255), 2)  #Draw Line
     # cv2.imshow("lines", edged)
     #
     # cv2.waitKey(0)
