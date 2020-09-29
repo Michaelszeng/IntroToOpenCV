@@ -115,8 +115,6 @@ def main():
     black background, then using Hough Line Detection to find the angle of the camera,
     then rotating the image based on the camera's tilt. Finally, compare the new height
     and width ratio of the contour and determine the number of rings.
-
-    Unfortunately, this method wasn't finished in time.
     """
     edged = getEdges(image)     #Finding edges
     edgedNoLines = edged.copy() #Making a copy of the edged image for later use
@@ -156,7 +154,6 @@ def main():
         if len(cnts) == 0:
             houghRotationAspectRatioResults = 0
         else:
-
             (x, y, w, h) = cv2.boundingRect(cnts[0])  #returns tuple with rectangle dimensions to bound the contour c
             obj = image[y:y + h, x:x + w]   #cropping the image
 
@@ -178,6 +175,8 @@ def removeBackground(image):
     """
     Purpose: Turns all non-orange pixels to black, removes all the noise to improve
     accuracy and consistency.
+    Parameters: The image to manipulate
+    Returns: The image with the background turned black
     """
     ringsOnlyImg = image.copy()     #Don't want to edit the original image
     imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)   #Convert to HSV to do hue detection
@@ -191,6 +190,8 @@ def removeBackground(image):
 def getEdges(image):
     """
     Purpose: return an image with a removed background and with edges detected.
+    Parameters: the image to manipulate
+    Returns: the image without the background and with the edges
     """
     #Turn all non-orange pixels black.
     ringsOnlyImg = removeBackground(image)
@@ -208,5 +209,5 @@ def getEdges(image):
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  #Run the main function
     main()
