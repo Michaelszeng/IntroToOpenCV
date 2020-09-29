@@ -52,12 +52,16 @@ def main():
     cv2.imshow("Method 1: Image with background removed", edged)
 
     #get the contours
+    #The Parameters are tuned such a maximum of 1 contour is returned for 1 or 4 rings, and 0 contours are returned for 0 rings
     (cnts, useless) = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    #cnts is a list of the actual contours
-    cv2.drawContours(image, cnts, -1, (255, 120, 0), 2)   #You can only draw one contour at a time, or all of them
+    cv2.drawContours(image, cnts, -1, (255, 120, 0), 2)   #Drawing the contour
     cv2.imshow("Method 1: Contour Around Rings", image)
 
-    for (i, c) in enumerate(cnts):
-        (x, y, w, h) = cv2.boundingRect(c)  #returns tuple with rectangle dimensions to bound the contour c
+    #If there are no contours, there are 0 rings
+    if len(cnts) == 0:
+        cntAspectRatioResults = 0
+    else:
+        (x, y, w, h) = cv2.boundingRect(cnts[0])  #returns tuple with rectangle dimensions to bound the contour c
         obj = image[y:y + h, x:x + w]   #cropping the image
 
         #Based on the ration of width to height of the contour of the rings, determine the height of the stack
@@ -66,9 +70,6 @@ def main():
         else:
             cntAspectRatioResults = 4
 
-    #If there are no contours, there are 0 rings
-    if len(cnts) == 0:
-        cntAspectRatioResults = 0
 
     print("# Rings Based on Width and Height of Contour: %d" % cntAspectRatioResults)
     # print("Contours in the image: {}".format(len(cnts)))
@@ -100,7 +101,7 @@ def main():
     #Based on the hue, determine the heigh of the ring stack based on pre-deterined thesholds
     if hueAvg >= 4:
         avgHueResult = 4
-    elif hueAvg > 0:
+    elif hueAvg >= 1:
         avgHueResult = 1
     else:
         avgHueResult = 0
@@ -117,31 +118,55 @@ def main():
 
     Unfortunately, this method wasn't finished in time.
     """
-    edged = getEdges(image)
-    edged = cv2.GaussianBlur(edged, (5, 5), 0)
-    cv2.imshow("edged: ", edged)
+    edged = getEdges(image)     #Finding edges
+    edgedNoLines = edged.copy() #Making a copy of the edged image for later use
+    edged = cv2.GaussianBlur(edged, (5, 5), 0)  #Blurring image for Improved Line Detection
+    cv2.imshow("Method 3: Image edges: ", edged)
     #Last Parameter is Threshold, most be greater than threshold to be counted
-    lines = cv2.HoughLinesP(edged, 1, np.pi/180, 60)
-    print(lines)
+    lines = cv2.HoughLinesP(edged, 1, np.pi/180, 60)    #Detecting the lines
+    # print(lines)
 
-    try:
+    try:    #If there are no lines detected, the below code will throw an exception, so I add a catch block
         horizSlopesSum = 0.0
         numHorizSlopes = 0
         for line in lines:  #Draw the lines found
             x1, y1, x2, y2 = line[0]    #Get endpoints of line
             cv2.line(edged, (x1, y1), (x2, y2), (255, 255, 255), 2)  #Draw Line
-            if x2 - x1 != 0:
+            if x2 - x1 != 0:    #Ensure we're not dividing by zero
                 slope = (y2-y1) / (x2-x1)
-                if abs(0.0 - slope) < 0.25:
+                if abs(0.0 - slope) < 0.25:     #If the slope is less than 0.25, then we consider it a line that's supposed to be horizontal
                     horizSlopesSum += slope
                     numHorizSlopes += 1
-        avgHorizSlope = horizSlopesSum / numHorizSlopes
-        print("Slope: %f" % avgHorizSlope)
-        angle = math.degrees(math.atan(avgHorizSlope))
-        print("angle: %f" % angle)
+        avgHorizSlope = horizSlopesSum / numHorizSlopes     #Finding the avg slope of the lines that are supposed to be horizontal
+        # print("Slope: %f" % avgHorizSlope)
+        angle = math.degrees(math.atan(avgHorizSlope))  #Convert slope to an angle for rotation
+        # print("angle: %f" % angle)
+        cv2.imshow("Method 3: Lines Detected from Hough Line Detection", edged)
 
-        cv2.imshow("lines", edged)
-    except:
+        rotated = imutils.rotate(edgedNoLines, angle)   #Rotating the Image
+        cv2.imshow("Method 3: Edges rotated based on Angle of Lines", rotated)
+
+        #get the contours
+            #The Parameters are tuned such a maximum of 1 contour is returned for 1 or 4 rings, and 0 contours are returned for 0 rings
+        (cnts, useless) = cv2.findContours(rotated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    #cnts is a list of the actual contours
+        cv2.drawContours(image, cnts, -1, (255, 120, 0), 2)   #Drawing the contour
+        cv2.imshow("Method 3: Contour Around Rotated Image", image)
+
+        #If there are no contours, there are 0 rings
+        if len(cnts) == 0:
+            houghRotationAspectRatioResults = 0
+        else:
+
+            (x, y, w, h) = cv2.boundingRect(cnts[0])  #returns tuple with rectangle dimensions to bound the contour c
+            obj = image[y:y + h, x:x + w]   #cropping the image
+
+            #Based on the ration of width to height of the contour of the rings, determine the height of the stack
+            if w > (2*h):
+                houghRotationAspectRatioResults = 1
+            else:
+                houghRotationAspectRatioResults = 4
+
+    except:     #Catch in case 'lines' is None (no lines detected)
         print("Exception Thrown")
         houghRotationAspectRatioResults = 0
 
