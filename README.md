@@ -9,5 +9,4 @@ Functions and Chapters used:
  - Chapter 8: Gaussian Blur
  - Chapter 10: Canny Edge Detection
  - Chapter 11: Contours
-
-This project is finished, although I will continue working on Hough Line Detection to rotate the image and improve accuracy in case the camera is tilted.
+ - Hough Line Detection
